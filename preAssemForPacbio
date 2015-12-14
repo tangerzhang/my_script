@@ -1,0 +1,98 @@
+#!perl
+
+###This perl script was used to generate script for filtering and correction of PacBio reads
+###The filtering step applies bash5tools.py and correction step uses pacBioToCA command line
+
+use Getopt::Std;
+getopts "l:s:m:t:r:g:i:";
+
+$spec_infor = "merSize=14
+
+merylMemory = 128000
+
+ovlStoreMemory = 8192
+ovlConcurrency = 6
+
+cnsConcurrency = 16
+
+merOverlapperSeedConcurrency = 6
+merOverlapperExtendConcurrency = 6
+
+frgCorrConcurrency = 8
+ovlCorrConcurrency = 16
+cnsConcurrency = 16";
+
+open(SPEC, "> pacbio.spec") or die"";
+print SPEC "$spec_infor\n";
+close SPEC;
+
+if ((!defined $opt_l) || (!defined $opt_g) ) {
+    die "************************************************************************
+    Usage: perl preAssemForPacBio.pl -l sample_name -g genome_size 
+      -h : help and usage.
+      -l : label, or sample name
+      -m : minReadScore, used for bash5tools.py (default: 0.75, recommond 0.8 for assembly)
+      -s : pacbio.spec, (default pacbio.spec)
+      -t : threads (default: all avaiable cpus)
+      -r : min reads length that used in correction (default: 500)
+      -g : genome size (unit: bp)
+      -i : illumina reads for correction (optional, not recommend for big genome)
+      ***************************************************\n";
+}else{
+  print "************************************************************************\n";
+  print "Version 1.0\n";
+  print "Copyright to Tanger, tanger.zhang@gmail.com\n";
+  print "RUNNING...\n";
+  print "************************************************************************\n";
+
+        }
+
+$sample_name    = $opt_l;
+$minReadScore   = (defined $opt_m) ? $opt_m : 0.75;
+$pacbio_spec    = (defined $opt_s) ? $opt_s : "pacbio.spec";
+$threads        = (defined $opt_t) ? $opt_t : 0;
+$read_length    = (defined $opt_r) ? $opt_r : 500;
+$genome_size    = $opt_g;
+$illumina_reads = (defined $opt_i) ? $opt_i : 0;
+
+open(OUT, "> run_cmd.sh") or die"";
+print OUT "\#bin/bash\n";
+$lines = `find -wholename *.bas.h5`;
+print "Reading bas.h5 file:\n$lines\n";
+@linedb = split(/\n/,$lines);
+$num_file = @linedb;
+#print "$num_file\n";
+foreach $line(@linedb){
+	if($num_file>1){
+		print "Too many files to handle for the current version\n";
+		last;
+		}
+	@tmpdb = split(/\//,$line);
+	$file_name = $tmpdb[-1];
+	$file_path = $line;
+	$sample_filter   = $sample_name.".filter";
+	$sample_corrected= $sample_name.".corrected";
+  $filtered_fastq  = $sample_filter.".fastq";
+	$corrected_fastq = $sample_corrected.".fastq";
+###1. start converting and filtering bas.h5 file to fastq file
+  $bash5tools_cmd = "bash5tools.py $file_path --outFilePrefix $sample_filter --readType subreads --outType fastq --minLength $read_length --minReadScore $minReadScore";
+	print "1. start converting bas.h5 file to fastq file\n";
+	print OUT "$bash5tools_cmd\n"; 
+#	system($bash5tools_cmd);
+	print "Finished convertion and filtering\n";
+###2. start reads correction
+  print "2. start reads correction\n";
+  if($illumina_reads != 0){
+  	$fastqToCA_cmd = "fastqToCA -libraryname illumina -technology illumina -reads $illumina_reads > illumina.frg";
+#  	system($fastqToCA_cmd);
+    print OUT "$fastqToCA_cmd\n";
+    $PBcR_cmd = "PBcR -length $read_length -partitions 200 -l $sample_corrected -s $pacbio_spec -fastq $filtered_fastq illumina.frg genomeSize=$genome_size";
+  }else{
+  	$PBcR_cmd = "PBcR -length $read_length -partitions 200 -l $sample_corrected -s $pacbio_spec -fastq $filtered_fastq genomeSize=$genome_size";
+  	}
+  $PBcR_cmd .= " -t ".$threads if($threads != 0);
+  print OUT "$PBcR_cmd\n";
+#  system($PBcR_cmd);
+  print "FINISHED correction\n";
+	}
+close OUT;
