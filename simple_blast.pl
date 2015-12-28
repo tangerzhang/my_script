@@ -52,7 +52,7 @@ $cmd = "makeblastdb -in ".$database." -dbtype ".$dbtype." -out dbname";
 print "$cmd\n";
 system($cmd);
 
-$cmd = $program." -query ".$query." -db dbname -out blast.out -evalue ".$evalue." -outfmt ".$outfmt." -num_threads ".$cpu;
+$cmd = $program." -query ".$query." -db dbname -out $output -evalue ".$evalue." -outfmt ".$outfmt." -num_threads ".$cpu;
 
 if($num_aln != 0){
 	$cmd .= " -num_alignments ".$num_aln;
