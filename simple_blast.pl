@@ -1,7 +1,7 @@
-#!perl
+#!/usr/bin/perl -w
 
 ###I can't remember makeblastdb and blast paramters all the time
-###Therefore develop this script for simple blast+
+###Therefore develop this script for simple blast
 
 use Getopt::Std;
 getopts "i:d:p:c:e:o:f:n:";
@@ -9,7 +9,7 @@ getopts "i:d:p:c:e:o:f:n:";
 
 if ((!defined $opt_i)|| (!defined $opt_d)  || (!defined $opt_p)) {
     die "************************************************************************
-    Usage: perl simple_blast.pl -i query.fasta -d database -p blastn -c cpu -e evalue -o output -f outfmt -n num_of_align
+    Usage: perl simple_blast.pl -i query.fasta -d database -p blastn 
       -h : help and usage.
       -i : query.fasta
       -d : database.fasta
@@ -23,7 +23,7 @@ if ((!defined $opt_i)|| (!defined $opt_d)  || (!defined $opt_p)) {
 }else{
   print "************************************************************************\n";
   print "Version demo\n";
-  print "Copyright to Tanger, tanger.zhang@gmail.com\n";
+  print "Copyright to Tanger, tanger.zhang\@gmail.com\n";
   print "RUNNING...\n";
   print "************************************************************************\n";
 	
