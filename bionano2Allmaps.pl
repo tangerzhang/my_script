@@ -10,7 +10,8 @@ if ((!defined $opt_x) || (!defined $opt_i) || (!defined $opt_e)) {
       -h : help and usage.
       -x : xmap from hybrid assembly
       -i : ref.fasta
-      -e : in silico digest enzyme
+      -e : in silico digest enzyme, could be any dual enzyme
+           e.g. -e BspQI,BbvCI
 ************************************************************************\n";
 }else{
   print "************************************************************************\n";
@@ -23,6 +24,7 @@ if ((!defined $opt_x) || (!defined $opt_i) || (!defined $opt_e)) {
 $ref_file = $opt_i;
 $enzyme   = $opt_e;
 $xmap     = $opt_x;
+$enzyme   =~ s/,/ /g;
 
 if($ref_file ne "ref.fasta"){
 	$cmd = "ln -s $ref_file ./ref.fasta" ;
@@ -33,6 +35,7 @@ if($ref_file ne "ref.fasta"){
 $cmd = "perl ~/Irys-scaffolding/KSU_bioinfo_lab/assemble_XeonPhi/third-party/fa2cmap_multi.pl -i ref.fasta -e $enzyme";
 system($cmd);
 
+$enzyme =~ s/\s+/_/g;
 $key_file = "ref_".$enzyme."_key.txt";
 
 open(IN, $key_file) or die"";
